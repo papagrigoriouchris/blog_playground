@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="el">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog API Playground</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: #f5f7fb;
+        color: #1f2a44;
+      }
+      header {
+        background: linear-gradient(135deg, #1f4f9c, #2f7cc0);
+        color: #fff;
+        padding: 24px 20px 28px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+      }
+      p.lead {
+        margin: 0;
+        opacity: 0.9;
+      }
+      main {
+        max-width: 1080px;
+        margin: -30px auto 40px;
+        padding: 0 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+      }
+      section.card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(31, 42, 68, 0.06);
+        padding: 16px;
+        border: 1px solid #e5e9f1;
+      }
+      section.card h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        color: #163763;
+      }
+      section.card p.helper {
+        margin: 0 0 10px;
+        font-size: 13px;
+        color: #5a6b85;
+      }
+      form {
+        display: grid;
+        gap: 10px;
+      }
+      label {
+        display: grid;
+        gap: 4px;
+        font-size: 14px;
+        color: #2c3d59;
+      }
+      input,
+      textarea {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d0d8e6;
+        font: inherit;
+        background: #fdfefe;
+      }
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      button {
+        background: linear-gradient(135deg, #1f4f9c, #2f7cc0);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.05s ease, box-shadow 0.15s ease;
+      }
+      button:hover {
+        box-shadow: 0 8px 20px rgba(31, 79, 156, 0.18);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      .output {
+        margin-top: 22px;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+        overflow: auto;
+        max-height: 420px;
+        border: 1px solid #1f2a44;
+      }
+      .output pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+      }
+      .list-box {
+        margin-top: 12px;
+        padding: 10px;
+        border: 1px solid #dce2ec;
+        border-radius: 10px;
+        background: #f8fbff;
+        max-height: 280px;
+        overflow: auto;
+        font-size: 14px;
+      }
+      .list-box ul {
+        padding-left: 18px;
+        margin: 0;
+      }
+      .list-box li {
+        margin-bottom: 6px;
+      }
+      .muted {
+        color: #5b6b83;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Blog API Playground</h1>
+      <p class="lead">Παίζουμε γρήγορα με τα endpoints του server</p>
+      <p class="muted">
+        Βασικό URL: ίδια προέλευση (π.χ. <code>http://localhost:3000</code>)
+      </p>
+    </header>
+
+    <main>
+      <div class="grid">
+        <section class="card">
+          <h2>Token (Authorization)</h2>
+          <p class="helper">Βάλε το JWT που παίρνεις από το /users/login</p>
+          <form id="token-form">
+            <label>Token JWT
+              <input id="token-input" name="token" placeholder="eyJhbGciOi..." />
+            </label>
+            <button type="submit">Αποθήκευση</button>
+          </form>
+          <p class="muted">
+            Το token μπαίνει στο header Authorization: Bearer &lt;token&gt;
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Δημιουργία χρήστη</h2>
+          <p class="helper">POST /users</p>
+          <form id="create-user-form">
+            <label>Όνομα χρήστη <input name="username" required /></label>
+            <label>Email <input name="email" type="email" required /></label>
+            <label>Κωδικός <input name="password" type="password" required /></label>
+            <button type="submit">Δημιουργία</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Λίστα χρηστών</h2>
+          <p class="helper">GET /users?take=&skip=</p>
+          <form id="list-users-form">
+            <label>take (προαιρετικό) <input name="take" type="number" min="1" /></label>
+            <label>skip (προαιρετικό) <input name="skip" type="number" min="0" /></label>
+            <button type="submit">Φέρε χρήστες</button>
+          </form>
+          <div class="list-box" id="users-list">Δεν υπάρχουν δεδομένα ακόμη.</div>
+        </section>
+
+        <section class="card">
+          <h2>Χρήστης με ID</h2>
+          <p class="helper">GET /users/:id</p>
+          <form id="get-user-form">
+            <label>ID <input name="id" type="number" min="1" required /></label>
+            <button type="submit">Ανάκτηση</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Δημιουργία post</h2>
+          <p class="helper">POST /posts</p>
+          <form id="create-post-form">
+            <label>Τίτλος <input name="title" required /></label>
+            <label>Περιεχόμενο <textarea name="content" required></textarea></label>
+            <label>Author ID <input name="authorId" type="number" min="1" required /></label>
+            <button type="submit">Δημιουργία</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Λίστα posts</h2>
+          <p class="helper">GET /posts</p>
+          <form id="list-posts-form">
+            <button type="submit">Φέρε posts</button>
+          </form>
+          <div class="list-box" id="posts-list">Δεν υπάρχουν δεδομένα ακόμη.</div>
+        </section>
+
+        <section class="card">
+          <h2>Post με ID</h2>
+          <p class="helper">GET /posts/:id</p>
+          <form id="get-post-form">
+            <label>ID <input name="id" type="number" min="1" required /></label>
+            <button type="submit">Ανάκτηση</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Ενημέρωση post</h2>
+          <p class="helper">PUT /posts/:id (στέλνεις μόνο ό,τι αλλάζει)</p>
+          <form id="update-post-form">
+            <label>ID <input name="id" type="number" min="1" required /></label>
+            <label>Νέος τίτλος (προαιρετικό) <input name="title" /></label>
+            <label>Νέο περιεχόμενο (προαιρετικό) <textarea name="content"></textarea></label>
+            <button type="submit">Ενημέρωση</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Διαγραφή post</h2>
+          <p class="helper">DELETE /posts/:id</p>
+          <form id="delete-post-form">
+            <label>ID <input name="id" type="number" min="1" required /></label>
+            <button type="submit">Διαγραφή</button>
+          </form>
+        </section>
+      </div>
+
+      <div class="output" aria-live="polite">
+        <pre id="output">Περιμένω την πρώτη κίνηση...</pre>
+      </div>
+    </main>
+
+    <script>
+      const outputEl = document.getElementById("output");
+      const usersListEl = document.getElementById("users-list");
+      const postsListEl = document.getElementById("posts-list");
+      let authToken = "";
+
+      function show(data) {
+        const time = new Date().toLocaleTimeString("el-GR");
+        const text =
+          "[" +
+          time +
+          "] " +
+          (typeof data === "string" ? data : JSON.stringify(data, null, 2));
+        outputEl.textContent = text;
+      }
+
+      async function request(url, options = {}, onSuccess) {
+        try {
+          const headers = {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: "Bearer " + authToken } : {}),
+          };
+          const res = await fetch(url, { headers, ...options });
+          const text = await res.text();
+          let body = {};
+          try {
+            body = text ? JSON.parse(text) : {};
+          } catch {
+            body = text || {};
+          }
+          if (!res.ok) {
+            show({ status: res.status, error: body.error || body });
+            return;
+          }
+          if (onSuccess) onSuccess(body);
+          show(body);
+        } catch (err) {
+          show("Σφάλμα δικτύου/πελάτη: " + err.message);
+        }
+      }
+
+      function renderList(el, data) {
+        if (!Array.isArray(data) || data.length === 0) {
+          el.textContent = "Δεν υπάρχουν δεδομένα.";
+          return;
+        }
+        const items = data
+          .map((item) => "<li>" + JSON.stringify(item) + "</li>")
+          .join("");
+        el.innerHTML = "<ul>" + items + "</ul>";
+      }
+
+      document
+        .getElementById("token-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const val = document.getElementById("token-input").value.trim();
+          authToken = val;
+          show(val ? "Αποθηκεύτηκε token" : "Καθαρίστηκε το token");
+        });
+
+      document
+        .getElementById("create-user-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const form = e.target;
+          request("/users", {
+            method: "POST",
+            body: JSON.stringify({
+              username: form.username.value.trim(),
+              email: form.email.value.trim(),
+              password: form.password.value,
+            }),
+          });
+          form.reset();
+        });
+
+      document
+        .getElementById("list-users-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const { take, skip } = e.target;
+          const params = new URLSearchParams();
+          if (take.value) params.set("take", take.value);
+          if (skip.value) params.set("skip", skip.value);
+          const query = params.toString();
+          request("/users" + (query ? "?" + query : ""), {}, (body) =>
+            renderList(usersListEl, body)
+          );
+        });
+
+      document
+        .getElementById("get-user-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const id = e.target.id.value;
+          request(`/users/${id}`);
+        });
+
+      document
+        .getElementById("create-post-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const form = e.target;
+          request("/posts", {
+            method: "POST",
+            body: JSON.stringify({
+              title: form.title.value.trim(),
+              content: form.content.value.trim(),
+              authorId: Number(form.authorId.value),
+            }),
+          });
+          form.reset();
+        });
+
+      document
+        .getElementById("list-posts-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          request("/posts", {}, (body) => renderList(postsListEl, body));
+        });
+
+      document
+        .getElementById("get-post-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const id = e.target.id.value;
+          request(`/posts/${id}`);
+        });
+
+      document
+        .getElementById("update-post-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const payload = {
+            title: form.title.value.trim(),
+            content: form.content.value.trim(),
+          };
+          if (!payload.title) delete payload.title;
+          if (!payload.content) delete payload.content;
+
+          request(`/posts/${form.id.value}`, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          });
+        });
+
+      document
+        .getElementById("delete-post-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const id = e.target.id.value;
+          request(`/posts/${id}`, { method: "DELETE" });
+        });
+    </script>
+  </body>
+</html>
