@@ -1,6 +1,9 @@
 const prisma = require('../lib/prisma')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 require('dotenv').config()
+
+const ALLOWED_ROLES = ['USER', 'ADMIN']
 
 async function createUser(req, res) {
   const { username, email, password } = req.body || {}
@@ -9,6 +12,11 @@ async function createUser(req, res) {
     return res.status(400).json({
       error: 'username, email and password are required',
     })
+  }
+
+  const requestedRole = req.body.role ? String(req.body.role).toUpperCase() : 'USER'
+  if (!ALLOWED_ROLES.includes(requestedRole)) {
+    return res.status(400).json({ error: 'role must be one of: USER, ADMIN' })
   }
 
   const existing = await prisma.user.findUnique({
@@ -22,9 +30,17 @@ async function createUser(req, res) {
       .json({ error: 'User with that email already exists' })
   }
 
+  let hashedPassword
+  try {
+    hashedPassword = await bcrypt.hash(password, 10)
+  } catch (err) {
+    console.error('Failed to hash password', err)
+    return res.status(500).json({ error: 'Failed to create user' })
+  }
+
   const user = await prisma.user.create({
-    data: { username, email, password },
-    select: { id: true, username: true, email: true, createdAt: true },
+    data: { username, email, password: hashedPassword, role: requestedRole },
+    select: { id: true, username: true, email: true, role: true, createdAt: true },
   })
 
   res.status(201).json(user)
@@ -38,7 +54,7 @@ async function getUserById(req, res) {
 
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, username: true, email: true, createdAt: true },
+    select: { id: true, username: true, email: true, role: true, createdAt: true },
   })
 
   if (!user) {
@@ -69,6 +85,7 @@ async function getUsers(req, res) {
       id: true,
       username: true,
       email: true,
+      role: true,
       createdAt: true,
       posts: { select: { id: true } },
     },
@@ -78,40 +95,44 @@ async function getUsers(req, res) {
 }
 
 async function loginUser(req, res) {
+  const { username, password } = req.body || {}
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ error: 'username and password are required to login' })
+  }
+
   //look up the database for a user with the given username
   let user = await prisma.user.findUnique({
     where: {
-      username: req.body.username,
+      username,
     },
   })
-  if (user) {
-    if (user.password === req.body.password) {
-      // payload
-      let payload = {
-        sub: user.id,
-        email: user.email,
-      }
-      // create the token
-      jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' },
-        (err, token) => {
-          if (err) {
-            res.send('Fail to create token')
-          } else {
-          res.send({message: 'Successfully Logged in', token: token})
-          }
-        }
-      )
-      // send to user
-    } else {
-      res.send('Password is incorrect')
-    }
-   // res.send(user)
-  } else {
-    res.send('User Not Found')
+
+  if (!user) {
+    return res.status(404).json({ error: 'User Not Found' })
   }
+
+  const isMatch = await bcrypt.compare(password, user.password)
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Password is incorrect' })
+  }
+
+  const payload = {
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+  }
+
+  jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
+    if (err) {
+      console.error('Failed to create token', err)
+      return res.status(500).json({ error: 'Fail to create token' })
+    }
+
+    return res.json({ message: 'Successfully Logged in', token })
+  })
 }
 
 module.exports = {
