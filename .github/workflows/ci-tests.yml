@@ -2,13 +2,13 @@ name: CI for API Tests
 
 # 1. Define the trigger event
 on:
-push:
-branches:
-- main
+  push:
+    branches:
+    - main
 
-pull_request:
-branches:
-- main
+  pull_request:
+    branches:
+    - main
 
 env:
   DATABASE_URL="postgresql://postgres:Druste21u$$@localhost:5432/postgres?schema=public"
