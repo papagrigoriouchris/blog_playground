@@ -1,3 +1,5 @@
+name: CI for API Tests
+
 # 1. Define the trigger event
 on:
 push:
