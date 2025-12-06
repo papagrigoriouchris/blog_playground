@@ -1,0 +1,61 @@
+# 1. Define the trigger event
+on:
+push:
+branches:
+- main
+
+pull_request:
+branches:
+- main
+
+env:
+  DATABASE_URL="postgresql://postgres:Druste21u$$@localhost:5432/postgres?schema=public"
+  JWT_SECRET = "1234Secret"
+
+# 2. Define a job
+jobs:
+test_api:
+
+# 3. Specify the runner environment
+runs-on: ubuntu-latest
+
+services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: Druste21u$$
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+# 4. Define the sequence of steps
+steps:
+# Step 1: Checkout the code
+- name: Checkout repository code
+uses: actions/checkout@v4
+
+# Step 2: Setup Node.js environment
+- name: Set up Node.js
+uses: actions/setup-node@v4
+with:
+node-version: '20' 
+
+# Use your project's target Node version (e.g.,18, 20, 22)
+
+# Step 3: Install dependencies
+- name: Install dependencies
+run: npm install
+
+-name: setup prisma 
+run: npx prisma migrate deploy
+# Step 4: Run the tests
+- name: Run Jest/Supertest API tests
+
+# Assumes your package.json has a "test" script like: "test": "jest"
+run: npm test

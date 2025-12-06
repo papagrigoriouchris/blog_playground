@@ -7,7 +7,7 @@ require('dotenv').config()
 const app = express()
 
 app.use(express.json())
-app.use(authenticate)
+// app.use(authenticate)
 
 app.use('/ui', express.static(path.join(__dirname, '..', 'public')))
 app.use(routes)
