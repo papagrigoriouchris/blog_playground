@@ -37,27 +37,27 @@ jobs:
           --health-retries 5
 
 # 4. Define the sequence of steps
-steps:
+    steps:
 # Step 1: Checkout the code
-- name: Checkout repository code
-uses: actions/checkout@v4
+    - name: Checkout repository code
+    uses: actions/checkout@v4
 
 # Step 2: Setup Node.js environment
--name: Set up Node.js
-uses: actions/setup-node@v4
-with:
-node-version: '20' 
+    -name: Set up Node.js
+    uses: actions/setup-node@v4
+    with:
+    node-version: '20' 
 
 # Use your project's target Node version (e.g.,18, 20, 22)
 
 # Step 3: Install dependencies
--name: Install dependencies
-run: npm install
+    -name: Install dependencies
+    run: npm install
 
--name: setup prisma 
-run: npx prisma migrate deploy
+    -name: setup prisma 
+    run: npx prisma migrate deploy
 # Step 4: Run the tests
--name: Run Jest/Supertest API tests
+    -name: Run Jest/Supertest API tests
 
 # Assumes your package.json has a "test" script like: "test": "jest"
-run: npm test
+    run: npm test
